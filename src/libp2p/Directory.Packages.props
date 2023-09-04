@@ -29,6 +29,7 @@
     <PackageVersion Include="NUnit3TestAdapter" Version="4.5.0" />
     <PackageVersion Include="NUnit.Analyzers" Version="3.6.1" />
     <PackageVersion Include="SimpleBase" Version="4.0.0" />
+    <PackageVersion Include="StirlingLabs.MsQuic" Version="23.7.1" />
     <PackageVersion Include="System.Runtime.Caching" Version="7.0.0" />
   </ItemGroup>
 </Project>
