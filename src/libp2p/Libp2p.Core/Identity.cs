@@ -155,32 +155,6 @@ public class Identity
                 {
                     return Ed25519.Verify(signature, 0, PublicKey.Data.ToByteArray(), 0, message, 0, message.Length);
                 }
-                break;
-
-            //case KeyType.Rsa:
-            //    {
-            //        using RSA rsa = RSA.Create();
-            //        rsa.ImportRSAPrivateKey(privateKey.Data.Span, out int bytesRead);
-            //        publicKeyData = ByteString.CopyFrom(rsa.ExportSubjectPublicKeyInfo());
-            //    }
-            //    break;
-
-            //case KeyType.Secp256K1:
-            //    {
-            //        X9ECParameters curve = ECNamedCurveTable.GetByName("secp256k1");
-            //        BouncyCastleCryptography::Org.BouncyCastle.Math.EC.ECPoint pointQ
-            //            = curve.G.Multiply(new BigInteger(1, privateKey.Data.Span));
-            //        publicKeyData = ByteString.CopyFrom(pointQ.GetEncoded(true));
-            //    }
-            //    break;
-
-            //case KeyType.Ecdsa:
-            //    {
-            //        using ECDsa ecdsa = ECDsa.Create();
-            //        ecdsa.ImportECPrivateKey(privateKey.Data.Span, out int _);
-            //        publicKeyData = ByteString.CopyFrom(ecdsa.ExportSubjectPublicKeyInfo());
-            //    }
-            //    break;
             default:
                 throw new NotImplementedException($"{PublicKey.Type} is not supported");
         }
@@ -206,31 +180,6 @@ public class Identity
                         ? DSASignatureFormat.IeeeP1363FixedFieldConcatenation
                         : DSASignatureFormat.Rfc3279DerSequence);
                 }
-
-            //case KeyType.Rsa:
-            //    {
-            //        using RSA rsa = RSA.Create();
-            //        rsa.ImportRSAPrivateKey(privateKey.Data.Span, out int bytesRead);
-            //        publicKeyData = ByteString.CopyFrom(rsa.ExportSubjectPublicKeyInfo());
-            //    }
-            //    break;
-
-            //case KeyType.Secp256K1:
-            //    {
-            //        X9ECParameters curve = ECNamedCurveTable.GetByName("secp256k1");
-            //        BouncyCastleCryptography::Org.BouncyCastle.Math.EC.ECPoint pointQ
-            //            = curve.G.Multiply(new BigInteger(1, privateKey.Data.Span));
-            //        publicKeyData = ByteString.CopyFrom(pointQ.GetEncoded(true));
-            //    }
-            //    break;
-
-            //case KeyType.Ecdsa:
-            //    {
-            //        using ECDsa ecdsa = ECDsa.Create();
-            //        ecdsa.ImportECPrivateKey(privateKey.Data.Span, out int _);
-            //        publicKeyData = ByteString.CopyFrom(ecdsa.ExportSubjectPublicKeyInfo());
-            //    }
-            //    break;
             default:
                 throw new NotImplementedException($"{PublicKey.Type} is not supported");
         }
