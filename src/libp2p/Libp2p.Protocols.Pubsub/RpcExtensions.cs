@@ -19,7 +19,6 @@ internal static class RpcExtensions
 
     public static Rpc WithMessages(this Rpc rpc, string topic, ulong seqNo, byte[] from, byte[] message, Identity identity)
     {
-
         Message msg = new();
         msg.Topic = topic;
         Span<byte> seqNoBytes = new byte[8];
@@ -28,11 +27,11 @@ internal static class RpcExtensions
         msg.From = ByteString.CopyFrom(from);
         msg.Data = ByteString.CopyFrom(message);
 
-        byte[] msgToSign = Encoding.UTF8.GetBytes(SignaturePayloadPrefix)
+        byte[] signingContent = Encoding.UTF8.GetBytes(SignaturePayloadPrefix)
             .Concat(msg.ToByteArray())
             .ToArray();
 
-        msg.Signature = ByteString.CopyFrom(identity.Sign(msgToSign, true));
+        msg.Signature = ByteString.CopyFrom(identity.Sign(signingContent));
         rpc.Publish.Add(msg);
         return rpc;
     }

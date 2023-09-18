@@ -10,22 +10,25 @@ using System.Security.Cryptography.X509Certificates;
 namespace Nethermind.Libp2p.Protocols.Quic;
 internal class CertificateHelper
 {
+    public static readonly Oid pubkeyExtensionOid = new("1.3.6.1.4.1.53594.1.1");
+    public static readonly byte[] signaturePrefix = "libp2p-tls-handshake:"u8.ToArray();
+
     public static X509Certificate CertificateFromIdentity(ECDsa sessionKey, Identity identity)
     {
-        var prefix = "libp2p-tls-handshake:"u8;
-        var signatureContent = prefix.ToArray().Concat(sessionKey.ExportSubjectPublicKeyInfo()).ToArray();
-        var s = identity.Sign(signatureContent);
-        var w = new AsnWriter(AsnEncodingRules.DER);
-        w.PushSequence();
-        w.WriteOctetString(identity.PublicKey.ToByteArray());
-        w.WriteOctetString(s);
-        w.PopSequence();
-        var pubkeyExtension = new byte[w.GetEncodedLength()];
-        w.Encode(pubkeyExtension);
+        byte[] signatureContent = signaturePrefix.Concat(sessionKey.ExportSubjectPublicKeyInfo()).ToArray();
+        byte[] signature = identity.Sign(signatureContent);
+
+        AsnWriter asnWrtier = new(AsnEncodingRules.DER);
+        asnWrtier.PushSequence();
+        asnWrtier.WriteOctetString(identity.PublicKey.ToByteArray());
+        asnWrtier.WriteOctetString(signature);
+        asnWrtier.PopSequence();
+        byte[] pubkeyExtension = new byte[asnWrtier.GetEncodedLength()];
+        asnWrtier.Encode(pubkeyExtension);
 
         CertificateRequest certRequest = new("", sessionKey, HashAlgorithmName.SHA256);
-        certRequest.CertificateExtensions.Add(new X509Extension(new Oid("1.3.6.1.4.1.53594.1.1"), pubkeyExtension, true));
+        certRequest.CertificateExtensions.Add(new X509Extension(pubkeyExtensionOid, pubkeyExtension, true));
 
-        return certRequest.CreateSelfSigned(DateTimeOffset.Now.AddDays(-1), DateTimeOffset.Now.AddDays(10));
+        return certRequest.CreateSelfSigned(DateTimeOffset.UtcNow, DateTimeOffset.MaxValue);
     }
 }

@@ -13,6 +13,8 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using Nethermind.Libp2p.Protocols.Quic;
 using System.Security.Cryptography;
+using System.Formats.Asn1;
+using System.Runtime.ConstrainedExecution;
 
 namespace Nethermind.Libp2p.Protocols;
 
@@ -64,6 +66,7 @@ public class QuicProtocol : IProtocol
             ServerAuthenticationOptions = new SslServerAuthenticationOptions
             {
                 ApplicationProtocols = protocols,
+                RemoteCertificateValidationCallback = (_, c, _, _) => VerifyRemoteCertificate(context.RemotePeer, c),
                 ServerCertificate = CertificateHelper.CertificateFromIdentity(_sessionKey, context.LocalPeer.Identity)
             },
         };
@@ -114,7 +117,6 @@ public class QuicProtocol : IProtocol
 
         IPEndPoint remoteEndpoint = new(ipAddress, udpPort);
 
-
         QuicClientConnectionOptions clientConnectionOptions = new()
         {
             LocalEndPoint = localEndpoint,
@@ -125,7 +127,7 @@ public class QuicProtocol : IProtocol
             ClientAuthenticationOptions = new SslClientAuthenticationOptions
             {
                 ApplicationProtocols = protocols,
-                RemoteCertificateValidationCallback = (a, b, c, d) => true,
+                RemoteCertificateValidationCallback = (_, c, _, _) => VerifyRemoteCertificate(context.RemotePeer, c),
                 ClientCertificates = new X509CertificateCollection { CertificateHelper.CertificateFromIdentity(_sessionKey, context.LocalPeer.Identity) },
             },
             RemoteEndPoint = remoteEndpoint,
@@ -144,6 +146,45 @@ public class QuicProtocol : IProtocol
         await ProcessStreams(connection, context, channelFactory, channel.Token);
     }
 
+    private bool VerifyRemoteCertificate(IPeer? remotePeer, X509Certificate certificate)
+    {
+        if (certificate is not X509Certificate2 cert)
+        {
+            _logger?.LogTrace($"Certificate is not {nameof(X509Certificate2)}.");
+            return false;
+        }
+        X509Extension[] exts = cert.Extensions.Where(e => e.Oid == CertificateHelper.pubkeyExtensionOid && e.Critical).ToArray();
+        if (exts.Length is 0)
+        {
+            _logger?.LogTrace($"Libp2p extension was not sent by remote during QUIC handshake.");
+            return true;
+        }
+        if (exts.Length is not 1)
+        {
+            _logger?.LogTrace($"There more than one libp2p extension.");
+            return false;
+        }
+        X509Extension ext = exts.First();
+
+        AsnReader a = new(ext.RawData, AsnEncodingRules.DER);
+        AsnReader signedKey = a.ReadSequence();
+
+        byte[] publicKey = signedKey.ReadOctetString();
+        byte[] signature = signedKey.ReadOctetString();
+
+        Core.Dto.PublicKey key = Core.Dto.PublicKey.Parser.ParseFrom(publicKey);
+        Identity id = new(key);
+        if (remotePeer is not null && id.PeerId.ToString() != remotePeer.Address.At(MultiaddrEnum.P2p))
+        {
+            _logger?.LogTrace($"PeerId does not match public key");
+            return false;
+        }
+
+        ReadOnlySpan<byte> prefix = "libp2p-tls-handshake:"u8;
+        IEnumerable<byte> signatureContent = prefix.ToArray().Concat(cert.PublicKey.ExportSubjectPublicKeyInfo());
+
+        return id.VerifySignature(signatureContent.ToArray(), signature);
+    }
 
     private async Task ProcessStreams(QuicConnection connection, IPeerContext context, IChannelFactory channelFactory, CancellationToken token)
     {

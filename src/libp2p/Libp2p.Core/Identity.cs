@@ -18,7 +18,7 @@ namespace Nethermind.Libp2p.Core;
 /// </summary>
 public class Identity
 {
-    private const KeyType DefaultKeyType = KeyType.Ecdsa;
+    private const KeyType DefaultKeyType = KeyType.Ed25519;
 
     public PublicKey PublicKey { get; }
     public PrivateKey? PrivateKey { get; }
@@ -155,18 +155,45 @@ public class Identity
                 {
                     return Ed25519.Verify(signature, 0, PublicKey.Data.ToByteArray(), 0, message, 0, message.Length);
                 }
+            case KeyType.Rsa:
+                {
+                    using RSA rsa = RSA.Create();
+                    return rsa.VerifyData(message, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                }
+            case KeyType.Secp256K1:
+                {
+                    X9ECParameters curve = ECNamedCurveTable.GetByName("secp256k1");
+                    var signer = SignerUtilities.GetSigner("SHA-256withPLAIN-ECDSA");
+
+                    signer.Init(false,
+                        new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters
+                        .ECPublicKeyParameters(curve.Curve.DecodePoint(PublicKey.Data.ToArray()),
+                        new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters.ECDomainParameters(curve)));
+                    signer.BlockUpdate(message, 0, message.Length);
+                    return signer.VerifySignature(signature);
+                }
+            case KeyType.Ecdsa:
+                {
+                    using ECDsa ecdsa = ECDsa.Create();
+                    return ecdsa.VerifyData(message, signature, HashAlgorithmName.SHA256);
+                }
             default:
                 throw new NotImplementedException($"{PublicKey.Type} is not supported");
         }
     }
 
-    public byte[] Sign(byte[] message, bool custom = false)
+    public byte[] Sign(byte[] message)
     {
+        if (PrivateKey is null)
+        {
+            throw new ArgumentException(nameof(PrivateKey));
+        }
+
         switch (PublicKey.Type)
         {
             case KeyType.Ed25519:
                 {
-                    var sig = new byte[64];
+                    var sig = new byte[Ed25519.SignatureSize];
                     Ed25519.Sign(PrivateKey.Data.ToByteArray(), 0, PublicKey.Data.ToByteArray(), 0,
                         message, 0, message.Length, sig, 0);
                     return sig;
@@ -176,9 +203,25 @@ public class Identity
                     var e = ECDsa.Create();
                     e.ImportECPrivateKey(PrivateKey.Data.Span, out _);
                     return e.SignData(message, HashAlgorithmName.SHA256,
-                        custom
-                        ? DSASignatureFormat.IeeeP1363FixedFieldConcatenation
-                        : DSASignatureFormat.Rfc3279DerSequence);
+                        DSASignatureFormat.Rfc3279DerSequence);
+                }
+            case KeyType.Rsa:
+                {
+                    using RSA rsa = RSA.Create();
+                    rsa.ImportRSAPrivateKey(PrivateKey.Data.Span, out _);
+                    return rsa.SignData(message, 0, message.Length, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+                }
+            case KeyType.Secp256K1:
+                {
+                    X9ECParameters curve = ECNamedCurveTable.GetByName("secp256k1");
+                    var signer = SignerUtilities.GetSigner("SHA-256withPLAIN-ECDSA");
+
+                    signer.Init(false,
+                        new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters
+                        .ECPublicKeyParameters(curve.Curve.DecodePoint(PublicKey.Data.ToArray()),
+                        new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters.ECDomainParameters(curve)));
+                    signer.BlockUpdate(message, 0, message.Length);
+                    return signer.GenerateSignature();
                 }
             default:
                 throw new NotImplementedException($"{PublicKey.Type} is not supported");
