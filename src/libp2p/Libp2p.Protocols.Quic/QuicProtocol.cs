@@ -1,7 +1,7 @@
 // SPDX - FileCo.pyrightText: 2023 Demerzel Solutions Limited
 // SPDX-License-Identifier: MIT
 
-extern alias BouncyCastleCryptography;
+
 using Nethermind.Libp2p.Core;
 using Microsoft.Extensions.Logging;
 using System.Buffers;

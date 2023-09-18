@@ -1,15 +1,15 @@
 // SPDX-FileCopyrightText: 2023 Demerzel Solutions Limited
 // SPDX-License-Identifier: MIT
 
-extern alias BouncyCastleCryptography;
-using BouncyCastleCryptography::Org.BouncyCastle.Asn1.X9;
-using BouncyCastleCryptography::Org.BouncyCastle.Math;
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Math;
 using Google.Protobuf;
 using Nethermind.Libp2p.Core.Dto;
-using BouncyCastleCryptography::Org.BouncyCastle.Math.EC.Rfc8032;
-using BouncyCastleCryptography::Org.BouncyCastle.Security;
+using Org.BouncyCastle.Math.EC.Rfc8032;
+using Org.BouncyCastle.Security;
 using System.Security.Cryptography;
 using System.Buffers;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Nethermind.Libp2p.Core;
 
@@ -67,19 +67,19 @@ public class Identity
             case KeyType.Secp256K1:
                 {
                     var curve = ECNamedCurveTable.GetByName("secp256k1");
-                    var domainParams = new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters.ECDomainParameters(curve.Curve, curve.G, curve.N, curve.H, curve.GetSeed());
+                    var domainParams = new ECDomainParameters(curve.Curve, curve.G, curve.N, curve.H, curve.GetSeed());
 
                     var secureRandom = new SecureRandom();
-                    var keyParams = new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters.ECKeyGenerationParameters(domainParams, secureRandom);
+                    var keyParams = new ECKeyGenerationParameters(domainParams, secureRandom);
 
-                    var generator = new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Generators.ECKeyPairGenerator("ECDSA");
+                    var generator = new Org.BouncyCastle.Crypto.Generators.ECKeyPairGenerator("ECDSA");
                     generator.Init(keyParams);
                     var keyPair = generator.GenerateKeyPair();
                     privateKeyData = null!;
                     Span<byte> privateKeySpan = stackalloc byte[32];
-                    ((BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters.ECPrivateKeyParameters)keyPair.Private).D.ToByteArray(privateKeySpan);
+                    ((ECPrivateKeyParameters)keyPair.Private).D.ToByteArray(privateKeySpan);
                     privateKeyData = ByteString.CopyFrom(privateKeySpan);
-                    publicKeyData = ByteString.CopyFrom(((BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters.ECPublicKeyParameters)keyPair.Public).Q.GetEncoded(true));
+                    publicKeyData = ByteString.CopyFrom(((ECPublicKeyParameters)keyPair.Public).Q.GetEncoded(true));
                 }
                 break;
             case KeyType.Ecdsa:
@@ -127,7 +127,7 @@ public class Identity
             case KeyType.Secp256K1:
                 {
                     X9ECParameters curve = ECNamedCurveTable.GetByName("secp256k1");
-                    BouncyCastleCryptography::Org.BouncyCastle.Math.EC.ECPoint pointQ
+                    Org.BouncyCastle.Math.EC.ECPoint pointQ
                         = curve.G.Multiply(new BigInteger(1, privateKey.Data.Span));
                     publicKeyData = ByteString.CopyFrom(pointQ.GetEncoded(true));
                 }
@@ -166,9 +166,8 @@ public class Identity
                     var signer = SignerUtilities.GetSigner("SHA-256withPLAIN-ECDSA");
 
                     signer.Init(false,
-                        new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters
-                        .ECPublicKeyParameters(curve.Curve.DecodePoint(PublicKey.Data.ToArray()),
-                        new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters.ECDomainParameters(curve)));
+                        new ECPublicKeyParameters(curve.Curve.DecodePoint(PublicKey.Data.ToArray()),
+                        new ECDomainParameters(curve)));
                     signer.BlockUpdate(message, 0, message.Length);
                     return signer.VerifySignature(signature);
                 }
@@ -216,10 +215,7 @@ public class Identity
                     X9ECParameters curve = ECNamedCurveTable.GetByName("secp256k1");
                     var signer = SignerUtilities.GetSigner("SHA-256withPLAIN-ECDSA");
 
-                    signer.Init(false,
-                        new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters
-                        .ECPublicKeyParameters(curve.Curve.DecodePoint(PublicKey.Data.ToArray()),
-                        new BouncyCastleCryptography::Org.BouncyCastle.Crypto.Parameters.ECDomainParameters(curve)));
+                    signer.Init(false, new ECPublicKeyParameters(curve.Curve.DecodePoint(PublicKey.Data.ToArray()), new ECDomainParameters(curve)));
                     signer.BlockUpdate(message, 0, message.Length);
                     return signer.GenerateSignature();
                 }

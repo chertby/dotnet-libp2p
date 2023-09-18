@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2023 Demerzel Solutions Limited
 // SPDX-License-Identifier: MIT
 
-extern alias BouncyCastleCryptography;
+
 using Google.Protobuf;
-using BouncyCastleCryptography::Org.BouncyCastle.Math.EC.Rfc8032;
+using Org.BouncyCastle.Math.EC.Rfc8032;
 using System.Buffers.Binary;
 using System.Text;
 using Nethermind.Libp2p.Core.Dto;
