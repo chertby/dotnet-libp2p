@@ -1,7 +1,6 @@
 // SPDX - FileCo.pyrightText: 2023 Demerzel Solutions Limited
 // SPDX-License-Identifier: MIT
 
-
 using Nethermind.Libp2p.Core;
 using Microsoft.Extensions.Logging;
 using System.Buffers;
@@ -14,7 +13,6 @@ using System.Security.Cryptography.X509Certificates;
 using Nethermind.Libp2p.Protocols.Quic;
 using System.Security.Cryptography;
 using System.Formats.Asn1;
-using System.Runtime.ConstrainedExecution;
 
 namespace Nethermind.Libp2p.Protocols;
 
@@ -108,7 +106,6 @@ public class QuicProtocol : IProtocol
         int udpPort = int.Parse(addr.At(MultiaddrEnum.Udp)!);
 
         IPEndPoint localEndpoint = new(ipAddress, udpPort);
-
 
         addr = context.RemotePeer.Address;
         ipProtocol = addr.Has(MultiaddrEnum.Ip4) ? MultiaddrEnum.Ip4 : MultiaddrEnum.Ip6;

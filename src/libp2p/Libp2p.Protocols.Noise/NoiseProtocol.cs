@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2023 Demerzel Solutions Limited
 // SPDX-License-Identifier: MIT
 
-
 using System.Buffers;
 using System.Buffers.Binary;
 using Google.Protobuf;
@@ -49,7 +48,6 @@ public class NoiseProtocol : IProtocol
         BinaryPrimitives.WriteInt16BigEndian(lenBytes.AsSpan(), (short)msg0.BytesWritten);
         await downChannel.WriteAsync(new ReadOnlySequence<byte>(lenBytes));
         await downChannel.WriteAsync(new ReadOnlySequence<byte>(buffer, 0, msg0.BytesWritten));
-
 
         lenBytes = (await downChannel.ReadAsync(2)).ToArray();
         int len = (int)BinaryPrimitives.ReadInt16BigEndian(lenBytes.AsSpan());

@@ -113,7 +113,6 @@ public abstract class PeerFactoryBuilderBase<TBuilder, TPeerFactory> : IPeerFact
             return stack;
         }
 
-
         public ProtocolStack Or(ProtocolStack stack)
         {
             if (Parent is null)
@@ -129,7 +128,6 @@ public abstract class PeerFactoryBuilderBase<TBuilder, TPeerFactory> : IPeerFact
             return $"{Protocol.Id}({TopProtocols.Count}): {string.Join(" or ", TopProtocols.Select(p => p.Protocol.Id))}";
         }
     }
-
 
     protected abstract ProtocolStack BuildStack();
 

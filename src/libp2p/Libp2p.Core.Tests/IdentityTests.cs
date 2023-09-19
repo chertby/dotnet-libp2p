@@ -65,7 +65,6 @@ public class IdentityTests
         var id = new Identity(key);
         Assert.That(new Identity(key).PeerId.ToString(), Is.EqualTo(peerIdString));
 
-
         var prefix = "libp2p-tls-handshake:"u8;
         var signatureContent = prefix.ToArray().Concat(cert.PublicKey.ExportSubjectPublicKeyInfo());
 

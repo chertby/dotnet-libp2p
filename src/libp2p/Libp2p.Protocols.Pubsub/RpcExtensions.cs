@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2023 Demerzel Solutions Limited
 // SPDX-License-Identifier: MIT
 
-
 using Google.Protobuf;
 using Org.BouncyCastle.Math.EC.Rfc8032;
 using System.Buffers.Binary;
