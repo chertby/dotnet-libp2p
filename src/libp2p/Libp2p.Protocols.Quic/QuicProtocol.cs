@@ -14,7 +14,6 @@ using System.Security.Cryptography.X509Certificates;
 using Nethermind.Libp2p.Protocols.Quic;
 using System.Security.Cryptography;
 using System.Formats.Asn1;
-using System.Runtime.ConstrainedExecution;
 
 namespace Nethermind.Libp2p.Protocols;
 
@@ -60,8 +59,8 @@ public class QuicProtocol : IProtocol
 
         QuicServerConnectionOptions serverConnectionOptions = new()
         {
-            DefaultStreamErrorCode = 0x0A, // Protocol-dependent error code.
-            DefaultCloseErrorCode = 0x0B, // Protocol-dependent error code.
+            DefaultStreamErrorCode = 0, // Protocol-dependent error code.
+            DefaultCloseErrorCode = 1, // Protocol-dependent error code.
 
             ServerAuthenticationOptions = new SslServerAuthenticationOptions
             {

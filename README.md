@@ -26,7 +26,7 @@ The target is to provide a performant well-tested implementation of a wide range
 
 
 | Protocol           | Version            | Status          |
-|--------------------|--------------------|------- ---------|
+|--------------------|--------------------|-----------------|
 | TCP                | tcp                | ✅             |
 | QUIC               | quic-v1            | ✅             |
 | multistream-select | /multistream/1.0.0 | ✅             |
